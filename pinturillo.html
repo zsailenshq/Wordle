@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-color: #f4f4f4;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.3s;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .word-container p {
+            margin: 10px 0;
+            color: #666;
+        }
+
+        .guess-input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100px;
+            text-align: center;
+        }
+
+        .guess-button {
+            background-color: #3498db;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .guess-button:hover {
+            background-color: #2980b9;
+        }
+
+        .guess-history {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .guess-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .letter-box {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #000;
+            font-weight: bold;
+            margin: 0 3px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        #resultMessage {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .dark-mode-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .dark-mode-icon {
+            font-size: 24px;
+            margin-right: 5px;
+        }
+    </style>
+    <title>Juego de Wordle</title>
+</head>
+<body>
+    <div class="container">
+        <div class="word-container">
+            <h2>Juego de Wordle</h2>
+            <p>Adivina la palabra de 5 letras:</p>
+            <input class="guess-input" type="text" id="guessInput" maxlength="5">
+            <button class="guess-button" id="guessButton">Adivinar</button>
+            <div class="guess-history" id="guessHistory"></div>
+            <p id="resultMessage"></p>
+        </div>
+    </div>
+    <div class="dark-mode-switch" id="darkModeSwitch">
+        <span class="dark-mode-icon" id="darkModeIcon">🌞</span>
+    </div>
+    <script>
+        const palabraObjetivo = generarPalabraAleatoria();
+        const elementoHistorial = document.getElementById("guessHistory");
+
+        function generarPalabraAleatoria() {
+            const palabras = ["manzana", "mesa", "silla", "reloj", "planta"];
+            return palabras[Math.floor(Math.random() * palabras.length)];
+        }
+
+        function comprobarAdivinanza(adivinanza) {
+            let resultado = "";
+
+            for (let i = 0; i < adivinanza.length; i++) {
+                if (adivinanza[i] === palabraObjetivo[i]) {
+                    resultado += `<div class="letter-box" style="background-color: green">${adivinanza[i].toUpperCase()}</div>`;
+                } else if (palabraObjetivo.includes(adivinanza[i])) {
+                    resultado += `<div class="letter-box" style="background-color: yellow">${adivinanza[i]}</div>`;
+                } else {
+                    resultado += `<div class="letter-box" style="background-color: red">${adivinanza[i]}</div>`;
+                }
+            }
+            return resultado;
+        }
+
+        const entradaAdivinanza = document.getElementById("guessInput");
+        const botonAdivinar = document.getElementById("guessButton");
+        const mensajeResultado = document.getElementById("resultMessage");
+
+        let intentos = 0;
+        const intentosMaximos = 6;
+
+        botonAdivinar.addEventListener("click", () => {
+            const adivinanza = entradaAdivinanza.value.toLowerCase();
+
+            if (adivinanza.length !== 5) {
+                mensajeResultado.textContent = "Por favor, ingresa una palabra de 5 letras.";
+            } else {
+                intentos++;
+                const resultado = comprobarAdivinanza(adivinanza);
+
+                const filaAdivinanza = document.createElement("div");
+                filaAdivinanza.className = "guess-row";
+                filaAdivinanza.innerHTML = resultado;
+                elementoHistorial.appendChild(filaAdivinanza);
+
+                if (resultado === palabraObjetivo.toUpperCase().split("").map(l => `<div class="letter-box" style="background-color: green">${l}</div>`).join("")) {
+                    botonAdivinar.disabled = true;
+                    mensajeResultado.textContent = `¡Correcto! Adivinaste la palabra "${palabraObjetivo}" en ${intentos} intentos.`;
+                } else if (intentos === intentosMaximos) {
+                    botonAdivinar.disabled = true;
+                    mensajeResultado.textContent = `¡Se te acabaron los intentos! La palabra era "${palabraObjetivo}".`;
+                }
+            }
+
+            const casillasLetras = document.querySelectorAll('.letter-box');
+            let retrasoRevelar = 500;
+            casillasLetras.forEach((casillaLetra, indice) => {
+                setTimeout(() => {
+                    casillaLetra.style.opacity = 1;
+                    casillaLetra.style.transform = 'translateY(0)';
+                }, retrasoRevelar * (indice + 1));
+            });
+
+            entradaAdivinanza.value = "";
+        });
+
+        const darkModeSwitch = document.getElementById("darkModeSwitch");
+        const darkModeIcon = document.getElementById("darkModeIcon");
+
+        let darkModeEnabled = false;
+
+        darkModeSwitch.addEventListener("click", () => {
+            darkModeEnabled = !darkModeEnabled;
+            document.body.style.backgroundColor = darkModeEnabled ? "#333" : "#f4f4f4";
+            darkModeIcon.textContent = darkModeEnabled ? "🌙" : "🌞";
+        });
+    </script>
+</body>
+</html>
